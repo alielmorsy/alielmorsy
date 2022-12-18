@@ -1,7 +1,7 @@
 <h1 align="center">Hi 👋, I'm Ali Ibrahim Elmorsy</h1>
 <h3 align="center">A Backend and system developer</h3>
 
-- 🔭 I’m currently working on [DeSocial](https://github.com/alielmorsy/DeSocial)
+<!--- 🔭 I’m currently working on [DeSocial](https://github.com/alielmorsy/DeSocial)-->
 
 - 📫 How to reach me **ali.elmorsy19@gmail.com**
 
