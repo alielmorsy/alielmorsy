@@ -27,13 +27,13 @@ jobs:
         # Adding CMake binaries and qt binaries to GITHUB_PATH to be visible to all steps    
         # You need to use UTF-8 encoding when writing to these files to ensure proper processing of the commands.
         run: |
-          echo "$(pwd)\secret.lic" | Out-File -FilePath  $env:ADT_LIC -Encoding utf8 
+          $env:ADT_LIC = "$(pwd)\secret.lic"
           echo "$env:Qt5_Dir\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo "$env:IQTA_TOOLS\mingw810_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo "$env:IQTA_TOOLS\CMake_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: ADT License
         run: |
-         echo "${env:ADT_LIC}"
+         echo "$env:ADT_LIC"
 
       - name: Gradle build
         run: |
