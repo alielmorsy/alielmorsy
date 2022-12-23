@@ -16,7 +16,6 @@ jobs:
       # Source Code Path
       ADT: ${{ github.workspace }}
       QT_ENV: '${{ github.workspace }}\qt_env'
-      ADT_LIC: "empty"
       
     steps:
     
