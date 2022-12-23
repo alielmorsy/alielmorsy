@@ -36,7 +36,8 @@ jobs:
 
       - name: Gradle build
         run: |
-          export ADT_LIC=$(pwd)/secret.lic
+          $env:ADT_LIC = "$(pwd)\secret.lic"
+          echo "$env:ADT_LIC"
           cd ADT_v2
           # Using --no-daemon as it is required by setup-java action for proper caching
           .\gradlew build --no-daemon
