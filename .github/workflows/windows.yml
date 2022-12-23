@@ -1,0 +1,138 @@
+name: ADT v2 Windows
+
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    name: Build Windows
+    runs-on: windows-2022
+    env:
+      # Source Code Path
+      ADT: ${{ github.workspace }}
+      QT_ENV: '${{ github.workspace }}\qt_env'
+      
+    steps:
+    
+      # This action checks-out your repository under $GITHUB_WORKSPACE, so your workflow can access it
+      - uses: actions/checkout@v3
+      
+      # Install Java Open JDK 16 (Adoptium)
+      - name: Set up JDK 16
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '16'
+          # Specify cache target
+          cache: 'gradle'
+          
+      - name: Cache Qt
+        # When the action finds a cache, the action restores the cached files to the path you configure.
+        # If there is no exact match, the action automatically creates a new cache if the job completes successfully.
+        id: cache-qt
+        uses: actions/cache@v3
+        with:
+          # Cache target path
+          path: ${{ env.QT_ENV }}
+          # A key used to restore the cache
+          key: ${{ runner.os }}-QtCache
+
+
+      - name: Setting binary PATH
+        # Adding CMake binaries and qt binaries to GITHUB_PATH to be visible to all steps    
+        # You need to use UTF-8 encoding when writing to these files to ensure proper processing of the commands.
+        run: |
+          echo "$(pwd)/secret.lic" >> $env:ADT_LIC
+          echo "$env:Qt5_Dir\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "$env:IQTA_TOOLS\mingw810_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "$env:IQTA_TOOLS\CMake_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: ADT License
+        run: |
+         echo "${env:ADT_LIC}"
+
+      - name: Gradle build
+        run: |
+          export ADT_LIC=$(pwd)/secret.lic
+          cd ADT_v2
+          # Using --no-daemon as it is required by setup-java action for proper caching
+          .\gradlew build --no-daemon
+
+      - name: Gradle doxygen
+        run: |
+          cd ADT_v2
+          .\gradlew doxygen --no-daemon
+
+      - name: Gradle javadoc
+        run: |
+          cd ADT_v2
+          .\gradlew javadoc --no-daemon
+          
+      - name: Test if QT_ENV is added properly
+        run: |
+          Get-Command rcc
+          Get-Command cmake.exe
+          get-command g++
+          get-command gcc
+          
+      - name: Prepare Frontend Build
+        # Explanation:
+        #   Build source directory: $env:ADT\ADT_v2\ADTv2_frontend_cpp\CMake
+        #   Build Output folder: $env:ADT\ADT_v2\ADTv2_frontend_cpp\build_win
+        #   Select Cmake Generator: Ninja
+        #   Build Type: Release
+        #   CMake C++ compiler: g++.exe
+        #   CMake C compiler: gcc.exe
+        #   CMake Add Path (prefix): $env:Qt5_Dir
+        #   CMake Include files: $env:IQTA_TOOLS\QtCreator\share\qtcreator\package-manager\auto-setup.cmake
+        #   Qmake executable location: $env:Qt5_Dir\bin\qmake.exe
+        #   CMake Make (ninja): $env:IQTA_TOOLS\Ninja\ninja.exe
+        run: >
+          cmake.exe
+          -S "$env:ADT\ADT_v2\ADTv2_frontend_cpp\CMake"
+          -B "$env:ADT\ADT_v2\ADTv2_frontend_cpp\build_win"
+          -GNinja 
+          "-DCMAKE_BUILD_TYPE:STRING=Release"  
+          "-DCMAKE_CXX_COMPILER:STRING=g++.exe" 
+          "-DCMAKE_C_COMPILER:STRING=gcc.exe" 
+          "-DCMAKE_PREFIX_PATH:STRING=$env:Qt5_Dir" 
+          "-DCMAKE_PROJECT_INCLUDE_BEFORE:PATH=$env:IQTA_TOOLS\QtCreator\share\qtcreator\package-manager\auto-setup.cmake"  
+          "-DQT_QMAKE_EXECUTABLE:STRING=$env:Qt5_Dir\bin\qmake.exe" 
+          "-DCMAKE_MAKE_PROGRAM:FILEPATH=$env:IQTA_TOOLS\Ninja\ninja.exe"
+
+      - name: Build Frontend
+        run: |
+          cmake.exe --build $env:ADT\ADT_v2\ADTv2_frontend_cpp\build_win --target all 
+        
+      - name: Qt Tests
+        # Check if there exists any .exe programs in $env:ADT\ADT_v2\ADTv2_frontend_cpp\build_win\test\*
+        #   If true:
+        #     - Loop over them and execute them
+        #   If false:
+        #     - Continue
+        run: |
+          $exist = Test-Path -Path "$env:ADT\ADT_v2\ADTv2_frontend_cpp\build_win\test"
+          if ( $exist )
+          {
+              $tests = Get-ChildItem "$env:ADT\ADT_v2\ADTv2_frontend_cpp\build_win\test\*" -include *.exe
+              echo $tests
+              foreach ( $test in $tests ) 
+              {
+                & "$test"
+              }
+          }
+
+      # Make a new output directory for the ADTv2_frontend_cpp.exe & application.rcc
+      - name: Deployment
+        run: |
+          mkdir "$env:ADT\output"
+          Copy-Item "$env:ADT\ADT_v2\ADTv2_frontend_cpp\build_win\ADTv2_frontend_cpp.exe" -Destination "$env:ADT\output\"
+          Copy-Item "$env:ADT\ADT_v2\ADTv2_frontend_cpp\build_win\application.rcc" -Destination "$env:ADT\output\"
+          cd "$env:ADT\output"
+          Get-Command windeployqt
+          windeployqt ADTv2_frontend_cpp.exe
+          dir
