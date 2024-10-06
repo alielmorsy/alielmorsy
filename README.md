@@ -1,7 +1,7 @@
 <h1 align="center">Hi 👋, I'm Ali Elmorsy (LELO)</h1>
 <h3 align="center">I am a programmer on the big internet.</h3>
 
-- 🔭 I’m currently working on Simple Array. Similar to Numpy but in CPP [Simple Array](https://github.com/alielmorsy/simpleMath-toolkit)
+- 🔭 I’m currently working on Smart Canvas.
 
 - 📫 How to reach me **ali.elmorsy19@gmail.com**
 
