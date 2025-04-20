@@ -1,4 +1,4 @@
-<h1 align="center">Hi 👋, I'm Ali Elmorsy (LELO)</h1>
+<h1 align="center">Hi 👋, I'm Ali Elmorsy (علاوي)</h1>
 <h3 align="center">I am a programmer on the big internet.</h3>
 
 - 🔭 I’m currently working on Smart Canvas.
